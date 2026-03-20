@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 
 import requests
 
@@ -16,13 +17,16 @@ def enrich_papers(config: AppConfig, papers: list[Paper]) -> None:
 
     for paper in papers:
         if provider == "deepseek" and deepseek_key:
-            paper.digest = _summarize_with_deepseek(
-                config=config,
-                paper=paper,
-                api_key=deepseek_key,
-                model=deepseek_model,
-                base_url=deepseek_base_url,
-            )
+            try:
+                paper.digest = _summarize_with_deepseek(
+                    config=config,
+                    paper=paper,
+                    api_key=deepseek_key,
+                    model=deepseek_model,
+                    base_url=deepseek_base_url,
+                )
+            except Exception:
+                paper.digest = _fallback_digest(paper)
         else:
             paper.digest = _fallback_digest(paper)
 
@@ -38,13 +42,13 @@ def _summarize_with_deepseek(
     base_url: str,
 ) -> dict:
     prompt = _build_prompt(config, paper)
-    response = requests.post(
+    response = _post_with_retries(
         f"{base_url}/chat/completions",
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
         },
-        json={
+        payload={
             "model": model,
             "messages": [
                 {
@@ -59,7 +63,7 @@ def _summarize_with_deepseek(
             "temperature": 0.2,
             "response_format": {"type": "json_object"},
         },
-        timeout=60,
+        timeout=120,
     )
     response.raise_for_status()
     data = response.json()
@@ -136,6 +140,31 @@ def _extract_deepseek_text(payload: dict) -> str:
 
 def _parse_summary_payload(output_text: str) -> dict:
     return json.loads(output_text)
+
+
+def _post_with_retries(
+    url: str,
+    headers: dict[str, str],
+    payload: dict,
+    timeout: int,
+    max_attempts: int = 3,
+) -> requests.Response:
+    last_error: Exception | None = None
+    for attempt in range(max_attempts):
+        try:
+            return requests.post(
+                url,
+                headers=headers,
+                json=payload,
+                timeout=timeout,
+            )
+        except requests.RequestException as exc:
+            last_error = exc
+            if attempt < max_attempts - 1:
+                time.sleep(2 * (attempt + 1))
+    if last_error is not None:
+        raise last_error
+    raise RuntimeError(f"request failed without an exception: {url}")
 
 
 def _fallback_digest(paper: Paper) -> dict:

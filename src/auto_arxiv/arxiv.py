@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from io import BytesIO
 from datetime import datetime, timedelta, timezone
 from typing import Iterable
@@ -25,7 +26,7 @@ def fetch_recent_papers(categories: Iterable[str], max_results: int, lookback_da
         f"search_query={quote_plus(query)}&sortBy=submittedDate&sortOrder=descending&max_results={max_results}"
     )
 
-    response = requests.get(url, timeout=30)
+    response = _request_with_retries(url, timeout=45)
     response.raise_for_status()
 
     cutoff = datetime.now(timezone.utc) - timedelta(days=lookback_days)
@@ -43,7 +44,7 @@ def fetch_recent_papers(categories: Iterable[str], max_results: int, lookback_da
 def populate_article_texts(papers: list[Paper], max_pages: int = 15, max_chars: int = 24000) -> None:
     for paper in papers:
         try:
-            response = requests.get(paper.pdf_url, timeout=60)
+            response = _request_with_retries(paper.pdf_url, timeout=90)
             response.raise_for_status()
             reader = PdfReader(BytesIO(response.content))
 
@@ -61,6 +62,20 @@ def populate_article_texts(papers: list[Paper], max_pages: int = 15, max_chars: 
         except Exception:
             # PDF extraction can fail on malformed files; fall back to the arXiv abstract.
             paper.article_text = paper.abstract
+
+
+def _request_with_retries(url: str, timeout: int, max_attempts: int = 3) -> requests.Response:
+    last_error: Exception | None = None
+    for attempt in range(max_attempts):
+        try:
+            return requests.get(url, timeout=timeout)
+        except requests.RequestException as exc:
+            last_error = exc
+            if attempt < max_attempts - 1:
+                time.sleep(2 * (attempt + 1))
+    if last_error is not None:
+        raise last_error
+    raise RuntimeError(f"request failed without an exception: {url}")
 
 
 def _parse_entry(entry: ElementTree.Element) -> Paper:
