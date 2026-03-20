@@ -52,7 +52,7 @@ python -m auto_arxiv.main
 - `SMTP_FROM`
 - `EMAIL_TO`
 
-程序会先下载 arXiv PDF，抽取前几页正文作为论文内容，再调用 DeepSeek 的 `chat/completions` 接口做摘要。没有配置 `DEEPSEEK_API_KEY` 时，会退化为基于抽取到的正文片段生成简单说明；如果不配置 SMTP，则只生成报告，不发邮件。
+程序会先下载 arXiv PDF，默认抽取前 `15` 页正文作为论文内容，再调用 DeepSeek 的 `chat/completions` 接口做摘要。没有配置 `DEEPSEEK_API_KEY` 时，会退化为基于抽取到的正文片段生成简单说明；如果不配置 SMTP，则只生成报告，不发邮件。
 
 ## Workflow
 

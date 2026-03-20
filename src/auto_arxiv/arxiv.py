@@ -40,7 +40,7 @@ def fetch_recent_papers(categories: Iterable[str], max_results: int, lookback_da
     return papers
 
 
-def populate_article_texts(papers: list[Paper], max_pages: int = 8, max_chars: int = 24000) -> None:
+def populate_article_texts(papers: list[Paper], max_pages: int = 15, max_chars: int = 24000) -> None:
     for paper in papers:
         try:
             response = requests.get(paper.pdf_url, timeout=60)
