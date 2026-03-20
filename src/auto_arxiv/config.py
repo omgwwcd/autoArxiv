@@ -17,10 +17,11 @@ def load_config(config_path: str | Path) -> AppConfig:
 
     settings = DigestSettings(
         project_name=digest.get("project_name", "Auto arXiv Digest"),
-        lookback_days=int(digest.get("lookback_days", 2)),
+        target_day_offset=int(digest.get("target_day_offset", 1)),
         max_papers_per_run=int(digest.get("max_papers_per_run", 5)),
         max_candidates=int(digest.get("max_candidates", 60)),
         language=digest.get("language", "zh-CN"),
+        timezone=digest.get("timezone", "Asia/Shanghai"),
     )
 
     topic_rules = [

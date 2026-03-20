@@ -26,7 +26,8 @@ def main() -> None:
     papers = fetch_recent_papers(
         categories=categories,
         max_results=config.digest.max_candidates,
-        lookback_days=config.digest.lookback_days,
+        timezone_name=config.digest.timezone,
+        target_day_offset=config.digest.target_day_offset,
     )
     selected = select_papers(config, papers, seen_ids)
     populate_article_texts(selected)

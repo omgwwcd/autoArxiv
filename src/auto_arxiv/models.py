@@ -17,10 +17,11 @@ class TopicRule:
 @dataclass(slots=True)
 class DigestSettings:
     project_name: str
-    lookback_days: int
+    target_day_offset: int
     max_papers_per_run: int
     max_candidates: int
     language: str
+    timezone: str
 
 
 @dataclass(slots=True)

@@ -1,9 +1,10 @@
 [digest]
 project_name = "Auto arXiv Digest - NLP Agent Skill Memory Evolve"
-lookback_days = 2
+target_day_offset = 1
 max_papers_per_run = 5
 max_candidates = 120
 language = "zh-CN"
+timezone = "Asia/Shanghai"
 
 [[topics]]
 name = "NLP Agent Skill Memory Evolve"

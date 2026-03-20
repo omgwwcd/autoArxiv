@@ -54,6 +54,8 @@ python -m auto_arxiv.main
 
 程序会先下载 arXiv PDF，默认抽取前 `15` 页正文作为论文内容，再调用 DeepSeek 的 `chat/completions` 接口做摘要。没有配置 `DEEPSEEK_API_KEY` 时，会退化为基于抽取到的正文片段生成简单说明；如果不配置 SMTP，则只生成报告，不发邮件。
 
+抓取时间窗口按配置中的时区和偏移日计算。当前默认设置为 `Asia/Shanghai` 和 `target_day_offset = 1`，也就是每天北京时间运行时，抓取“前一天新发布”的论文。
+
 ## Workflow
 
 工作流文件位于 [.github/workflows/daily_digest.yml](/Users/hehaixing/Documents/AI/autoArxiv/.github/workflows/daily_digest.yml)。

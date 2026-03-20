@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import time
 from io import BytesIO
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Iterable
 from urllib.parse import quote_plus
 from xml.etree import ElementTree
+from zoneinfo import ZoneInfo
 
 import fitz
 from pypdf import PdfReader
@@ -16,7 +17,12 @@ from .models import Paper
 ATOM_NS = {"atom": "http://www.w3.org/2005/Atom"}
 
 
-def fetch_recent_papers(categories: Iterable[str], max_results: int, lookback_days: int) -> list[Paper]:
+def fetch_recent_papers(
+    categories: Iterable[str],
+    max_results: int,
+    timezone_name: str,
+    target_day_offset: int,
+) -> list[Paper]:
     category_terms = sorted(set(categories))
     if not category_terms:
         return []
@@ -30,13 +36,14 @@ def fetch_recent_papers(categories: Iterable[str], max_results: int, lookback_da
     response = _request_with_retries(url, timeout=45)
     response.raise_for_status()
 
-    cutoff = datetime.now(timezone.utc) - timedelta(days=lookback_days)
+    local_tz = ZoneInfo(timezone_name)
+    target_local_date = datetime.now(local_tz).date() - timedelta(days=target_day_offset)
     root = ElementTree.fromstring(response.text)
     papers: list[Paper] = []
 
     for entry in root.findall("atom:entry", ATOM_NS):
         paper = _parse_entry(entry)
-        if paper.published >= cutoff:
+        if _matches_target_local_date(paper.published, local_tz, target_local_date):
             papers.append(paper)
 
     return papers
@@ -78,6 +85,11 @@ def _request_with_retries(url: str, timeout: int, max_attempts: int = 3) -> requ
     if last_error is not None:
         raise last_error
     raise RuntimeError(f"request failed without an exception: {url}")
+
+
+def _matches_target_local_date(published_utc: datetime, local_tz: ZoneInfo, target_local_date: date) -> bool:
+    published_local_date = published_utc.astimezone(local_tz).date()
+    return published_local_date == target_local_date
 
 
 def _extract_candidate_figure(pdf_bytes: bytes, max_pages: int) -> tuple[bytes | None, str]:
