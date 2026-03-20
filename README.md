@@ -34,8 +34,7 @@ python -m auto_arxiv.main
 
 当前默认主题已经调整为你关心的方向：
 
-- NLP
-- Agent / Skill / Memory
+- NLP + Agent + Skill / Memory / Evolve 强相关
 
 ## GitHub Secrets
 

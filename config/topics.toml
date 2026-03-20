@@ -1,35 +1,20 @@
 [digest]
-project_name = "Auto arXiv Digest - NLP Agent Memory"
+project_name = "Auto arXiv Digest - NLP Agent Skill Memory Evolve"
 lookback_days = 2
 max_papers_per_run = 5
 max_candidates = 60
 language = "zh-CN"
 
 [[topics]]
-name = "NLP"
+name = "NLP Agent Skill Memory Evolve"
 categories = ["cs.CL", "cs.AI", "cs.LG"]
 include_keywords = [
-  "natural language processing",
-  "nlp",
-  "language model",
   "large language model",
   "llm",
-  "reasoning",
-  "instruction tuning",
-  "retrieval-augmented generation",
-  "rag",
-]
-exclude_keywords = ["survey request for papers"]
-required_keyword_groups = [
-  ["language model", "large language model", "llm", "natural language processing", "nlp"],
-]
-
-[[topics]]
-name = "Agent Skill Memory"
-categories = ["cs.AI", "cs.CL", "cs.LG", "cs.MA"]
-include_keywords = [
   "agent",
   "ai agent",
+  "autonomous agent",
+  "tool agent",
   "tool use",
   "function calling",
   "skill",
@@ -37,12 +22,28 @@ include_keywords = [
   "memory",
   "long-term memory",
   "episodic memory",
+  "retrieval memory",
   "agentic",
   "planning",
   "multi-agent",
+  "evolve",
+  "evolution",
+  "self-evolving",
+  "self-improving",
+  "adaptive agent",
+  "language agent",
+  "text-based agent",
 ]
-exclude_keywords = []
+exclude_keywords = [
+  "survey request for papers",
+  "vision-language",
+  "video-language",
+  "image generation",
+  "speech recognition",
+  "text-to-image",
+]
 required_keyword_groups = [
-  ["agent", "ai agent", "agentic", "multi-agent"],
-  ["skill", "skills", "memory", "long-term memory", "episodic memory", "tool use", "function calling", "planning"],
+  ["language model", "large language model", "llm", "natural language processing", "nlp", "language agent", "text-based agent"],
+  ["agent", "ai agent", "autonomous agent", "agentic", "multi-agent"],
+  ["skill", "skills", "memory", "long-term memory", "episodic memory", "retrieval memory", "tool use", "function calling", "planning", "evolve", "evolution", "self-evolving", "self-improving", "adaptive agent"],
 ]
