@@ -8,6 +8,9 @@ import requests
 
 from .models import AppConfig, Paper
 
+QUALITY_THRESHOLD = 90
+MAX_REWRITE_ROUNDS = 5
+
 
 def enrich_papers(config: AppConfig, papers: list[Paper]) -> None:
     provider = os.getenv("LLM_PROVIDER", "").strip().lower() or "deepseek"
@@ -18,7 +21,7 @@ def enrich_papers(config: AppConfig, papers: list[Paper]) -> None:
     for paper in papers:
         if provider == "deepseek" and deepseek_key:
             try:
-                paper.digest = _summarize_with_deepseek(
+                paper.digest, paper.digest_quality_score = _summarize_with_deepseek(
                     config=config,
                     paper=paper,
                     api_key=deepseek_key,
@@ -27,8 +30,10 @@ def enrich_papers(config: AppConfig, papers: list[Paper]) -> None:
                 )
             except Exception:
                 paper.digest = _fallback_digest(paper)
+                paper.digest_quality_score = 0
         else:
             paper.digest = _fallback_digest(paper)
+            paper.digest_quality_score = 0
 
         paper.summary = str(paper.digest.get("final_summary", "")).strip()
         paper.recommendation_reason = str(paper.digest.get("why_it_matters", "")).strip()
@@ -40,39 +45,39 @@ def _summarize_with_deepseek(
     api_key: str,
     model: str,
     base_url: str,
-) -> dict:
-    prompt = _build_prompt(config, paper)
-    response = _post_with_retries(
-        f"{base_url}/chat/completions",
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json",
-        },
-        payload={
-            "model": model,
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "You generate concise academic digests and must output valid JSON only.",
-                },
-                {
-                    "role": "user",
-                    "content": prompt,
-                },
-            ],
-            "temperature": 0.2,
-            "response_format": {"type": "json_object"},
-        },
-        timeout=120,
-    )
-    response.raise_for_status()
-    data = response.json()
-    output_text = _extract_deepseek_text(data)
-    return _parse_summary_payload(output_text)
+) -> tuple[dict, int]:
+    previous_digest: dict | None = None
+    review_feedback = ""
+    best_digest: dict | None = None
+    best_score = -1
+
+    for _ in range(MAX_REWRITE_ROUNDS):
+        prompt = _build_prompt(config, paper, previous_digest, review_feedback)
+        digest = _generate_digest(prompt, api_key, model, base_url)
+        score, feedback = _review_digest(config, paper, digest, api_key, model, base_url)
+
+        if score > best_score:
+            best_digest = digest
+            best_score = score
+
+        if score >= QUALITY_THRESHOLD:
+            return digest, score
+
+        previous_digest = digest
+        review_feedback = feedback
+
+    if best_digest is None:
+        raise RuntimeError("failed to produce a digest")
+    return best_digest, best_score
 
 
-def _build_prompt(config: AppConfig, paper: Paper) -> str:
-    return (
+def _build_prompt(
+    config: AppConfig,
+    paper: Paper,
+    previous_digest: dict | None = None,
+    review_feedback: str = "",
+) -> str:
+    prompt = (
         f"You are preparing a daily arXiv digest in {config.digest.language}.\n"
         "Return strict JSON only.\n"
         "All prose fields must be written in Simplified Chinese.\n"
@@ -127,6 +132,99 @@ def _build_prompt(config: AppConfig, paper: Paper) -> str:
         f"Abstract: {paper.abstract}\n\n"
         f"Paper content excerpt:\n{paper.article_text}\n"
     )
+    if previous_digest and review_feedback:
+        prompt += (
+            "\nPrevious draft JSON:\n"
+            f"{json.dumps(previous_digest, ensure_ascii=False)}\n\n"
+            "Reviewer feedback to address in the rewrite:\n"
+            f"{review_feedback}\n"
+            "Rewrite the digest so it is more accurate, more specific, better structured, and more useful."
+        )
+    return prompt
+
+
+def _generate_digest(prompt: str, api_key: str, model: str, base_url: str) -> dict:
+    response = _post_with_retries(
+        f"{base_url}/chat/completions",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        payload={
+            "model": model,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "You generate concise academic digests and must output valid JSON only.",
+                },
+                {
+                    "role": "user",
+                    "content": prompt,
+                },
+            ],
+            "temperature": 0.2,
+            "response_format": {"type": "json_object"},
+        },
+        timeout=120,
+    )
+    response.raise_for_status()
+    data = response.json()
+    output_text = _extract_deepseek_text(data)
+    return _parse_summary_payload(output_text)
+
+
+def _review_digest(
+    config: AppConfig,
+    paper: Paper,
+    digest: dict,
+    api_key: str,
+    model: str,
+    base_url: str,
+) -> tuple[int, str]:
+    prompt = (
+        f"You are reviewing a paper digest written in {config.digest.language}.\n"
+        "Return strict JSON only with keys: score, feedback.\n"
+        "score must be an integer from 0 to 100.\n"
+        "feedback must be concise but concrete, focusing on factual specificity, structure, usefulness, and whether the digest really reflects the paper.\n"
+        "Use Simplified Chinese.\n\n"
+        f"Paper title: {paper.title}\n"
+        f"Matched topics: {', '.join(paper.matched_topics)}\n"
+        f"Abstract: {paper.abstract}\n\n"
+        f"Paper content excerpt:\n{paper.article_text}\n\n"
+        "Digest JSON to review:\n"
+        f"{json.dumps(digest, ensure_ascii=False)}\n"
+    )
+    response = _post_with_retries(
+        f"{base_url}/chat/completions",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        payload={
+            "model": model,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "You are a strict academic digest reviewer and must output valid JSON only.",
+                },
+                {
+                    "role": "user",
+                    "content": prompt,
+                },
+            ],
+            "temperature": 0.1,
+            "response_format": {"type": "json_object"},
+        },
+        timeout=120,
+    )
+    response.raise_for_status()
+    data = response.json()
+    output_text = _extract_deepseek_text(data)
+    parsed = json.loads(output_text)
+    score = int(parsed.get("score", 0))
+    feedback = str(parsed.get("feedback", "")).strip()
+    score = max(0, min(100, score))
+    return score, feedback
 
 
 def _extract_deepseek_text(payload: dict) -> str:

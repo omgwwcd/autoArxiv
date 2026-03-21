@@ -47,6 +47,7 @@ class Paper:
     summary: str = ""
     recommendation_reason: str = ""
     digest: dict[str, Any] = field(default_factory=dict)
+    digest_quality_score: int = 0
     figure_bytes: bytes | None = None
     figure_subtype: str = ""
     figure_content_id: str = ""
