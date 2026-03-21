@@ -97,8 +97,14 @@ def _build_prompt(config: AppConfig, paper: Paper) -> str:
         "  ],\n"
         '  "most_important_figure": {\n'
         '    "figure_source": "...",\n'
-        '    "why_it_matters": "...",\n'
-        '    "how_to_read": "..."\n'
+        '    "why_it_matters": "..."\n'
+        "  },\n"
+        '  "how_to_read_this_figure": "...",\n'
+        '  "second_important_figure": {\n'
+        '    "why_it_matters": "..."\n'
+        "  },\n"
+        '  "related_recent_papers": [\n'
+        '    {"title": "...", "why_important": "...", "core_contribution": "...", "relation_to_current_work": "..."}\n'
         "  },\n"
         '  "implications": {\n'
         '    "for_agent_systems": "...",\n'
@@ -112,6 +118,7 @@ def _build_prompt(config: AppConfig, paper: Paper) -> str:
         "}\n"
         "Keep it concise but information-dense. If venue or code is unknown, use an empty string.\n"
         "Do not answer in English unless a paper title, metric name, or method name must remain in English.\n"
+        "For related_recent_papers, include up to 3 papers only when you are reasonably confident they are cited or strongly connected based on the provided content; otherwise return an empty list.\n"
         "Base your answer on the paper content excerpt below, not on webpage structure or HTML.\n\n"
         f"Title: {paper.title}\n"
         f"Authors: {', '.join(paper.authors)}\n"
@@ -199,8 +206,12 @@ def _fallback_digest(paper: Paper) -> dict:
         "most_important_figure": {
             "figure_source": "",
             "why_it_matters": "当前版本未自动抽取图像，但建议人工查看论文主结果图。",
-            "how_to_read": "优先查看能直接支撑核心结论的主实验图或消融图。",
         },
+        "how_to_read_this_figure": "优先查看横轴、纵轴和关键对比组，确认图是否直接支撑论文的核心主张。",
+        "second_important_figure": {
+            "why_it_matters": "如果论文中存在失败案例图、消融图或模型差异图，这类图通常是第二重要的辅助证据。",
+        },
+        "related_recent_papers": [],
         "implications": {
             "for_agent_systems": "如果论文与 agent 相关，应重点关注其对任务规划、工具使用或可靠性的启发。",
             "for_skill": "如果论文涉及 skill，应关注技能是否可组合、可复用、可验证。",

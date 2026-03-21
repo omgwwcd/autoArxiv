@@ -32,6 +32,8 @@ def render_email_html(config: AppConfig, papers: list[Paper]) -> str:
         method = digest.get("method_overview", {})
         implications = digest.get("implications", {})
         figure = digest.get("most_important_figure", {})
+        second_figure = digest.get("second_important_figure", {})
+        related_recent_papers = digest.get("related_recent_papers", [])
         findings_html = "".join(
             f"<li><strong>{escape(str(item.get('title', 'Finding')))}:</strong> {escape(str(item.get('detail', '')))}</li>"
             for item in digest.get("key_findings", [])
@@ -43,6 +45,17 @@ def render_email_html(config: AppConfig, papers: list[Paper]) -> str:
         limitations_html = "".join(
             f"<li>{escape(str(item))}</li>"
             for item in digest.get("limitations", [])
+        )
+        related_papers_html = "".join(
+            (
+                "<li>"
+                f"<strong>{escape(str(item.get('title', '')))}</strong><br>"
+                f"<strong>为什么重要：</strong>{escape(str(item.get('why_important', '')))}<br>"
+                f"<strong>核心贡献：</strong>{escape(str(item.get('core_contribution', '')))}<br>"
+                f"<strong>与当前论文关系：</strong>{escape(str(item.get('relation_to_current_work', '')))}"
+                "</li>"
+            )
+            for item in related_recent_papers
         )
         items.append(
             f"""
@@ -77,7 +90,10 @@ def render_email_html(config: AppConfig, papers: list[Paper]) -> str:
               {figure_html}
               <p style="margin:0 0 8px 0;"><strong>图来源:</strong> {escape(str(figure.get('figure_source', '')))}</p>
               <p style="margin:0 0 8px 0;"><strong>为什么重要:</strong> {escape(str(figure.get('why_it_matters', '')))}</p>
-              <p style="margin:0 0 8px 0;"><strong>如何读这张图:</strong> {escape(str(figure.get('how_to_read', '')))}</p>
+              <h4 style="margin:12px 0 6px 0;">8. 如何读这张图</h4>
+              <p style="margin:0 0 8px 0;">{escape(str(digest.get('how_to_read_this_figure', '')))}</p>
+              <h4 style="margin:12px 0 6px 0;">9. 次重要图</h4>
+              <p style="margin:0 0 8px 0;"><strong>为什么也重要:</strong> {escape(str(second_figure.get('why_it_matters', '')))}</p>
               <h4 style="margin:12px 0 6px 0;">10. 对 Agent / Skill / Memory 的启发</h4>
               <p style="margin:0 0 8px 0;"><strong>对 Agent 系统:</strong> {escape(str(implications.get('for_agent_systems', '')))}</p>
               <p style="margin:0 0 8px 0;"><strong>对 Skill:</strong> {escape(str(implications.get('for_skill', '')))}</p>
@@ -87,7 +103,9 @@ def render_email_html(config: AppConfig, papers: list[Paper]) -> str:
               <ul style="margin:0 0 8px 18px;padding:0;">{limitations_html}</ul>
               <h4 style="margin:12px 0 6px 0;">12. 我的看法 / 个人笔记</h4>
               <p style="margin:0 0 8px 0;">{escape(str(digest.get('my_take', '')))}</p>
-              <h4 style="margin:12px 0 6px 0;">13. 总结</h4>
+              <h4 style="margin:12px 0 6px 0;">13. 这篇工作引用的近期高影响力相关文章</h4>
+              <ul style="margin:0 0 8px 18px;padding:0;">{related_papers_html or '<li>当前未可靠抽取到近期高影响力相关文章。</li>'}</ul>
+              <h4 style="margin:12px 0 6px 0;">14. 总结</h4>
               <p style="margin:0 0 8px 0;">{escape(str(digest.get('final_summary', '')))}</p>
               <p style="margin:0;">
                 <a href="{escape(paper.abs_url)}">Abstract</a>
@@ -128,7 +146,9 @@ def _render_markdown(config: AppConfig, papers: list[Paper]) -> str:
         code_link = str(digest.get("code_link", "")).strip()
         method = digest.get("method_overview", {})
         figure = digest.get("most_important_figure", {})
+        second_figure = digest.get("second_important_figure", {})
         implications = digest.get("implications", {})
+        related_recent_papers = digest.get("related_recent_papers", [])
         lines.extend(
             [
                 f"## {index}. {paper.title}",
@@ -174,7 +194,14 @@ def _render_markdown(config: AppConfig, papers: list[Paper]) -> str:
                 "",
                 f"- 图来源: {figure.get('figure_source', '')}",
                 f"- 为什么重要: {figure.get('why_it_matters', '')}",
-                f"- 如何读这张图: {figure.get('how_to_read', '')}",
+                "",
+                "### 8. 如何读这张图",
+                "",
+                str(digest.get("how_to_read_this_figure", "")),
+                "",
+                "### 9. 次重要图",
+                "",
+                f"- 为什么也重要: {second_figure.get('why_it_matters', '')}",
                 "",
                 "### 10. 对 Agent / Skill / Memory 的启发",
                 "",
@@ -191,10 +218,29 @@ def _render_markdown(config: AppConfig, papers: list[Paper]) -> str:
                 "",
                 str(digest.get("my_take", "")),
                 "",
-                "### 13. 总结",
+                "### 13. 这篇工作引用的近期高影响力相关文章",
+                "",
+                *(
+                    [
+                        f"- {item.get('title', '')}",
+                        f"  为什么重要：{item.get('why_important', '')}",
+                        f"  核心贡献：{item.get('core_contribution', '')}",
+                        f"  与当前论文关系：{item.get('relation_to_current_work', '')}",
+                    ]
+                    for item in related_recent_papers
+                ),
+                *([] if related_recent_papers else ["- 当前未可靠抽取到近期高影响力相关文章。"]),
+                "",
+                "### 14. 总结",
                 "",
                 str(digest.get("final_summary", "")),
                 "",
             ]
         )
-    return "\n".join(lines)
+    flattened: list[str] = []
+    for item in lines:
+        if isinstance(item, list):
+            flattened.extend(item)
+        else:
+            flattened.append(item)
+    return "\n".join(flattened)

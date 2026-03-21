@@ -1,5 +1,5 @@
 [digest]
-project_name = "Auto arXiv Digest - Agent First, RL Second, NLP Fallback"
+project_name = "Auto arXiv Digest - Agent Memory/RL First, NLP Fallback"
 target_day_offset = 1
 max_papers_per_run = 5
 max_candidates = 120
@@ -7,7 +7,7 @@ language = "zh-CN"
 timezone = "Asia/Shanghai"
 
 [[topics]]
-name = "Agent Skill Memory Evolve"
+name = "Agent Skill Memory RL Evolve"
 categories = ["cs.CL", "cs.AI", "cs.LG"]
 include_keywords = [
   "agent",
@@ -25,6 +25,18 @@ include_keywords = [
   "agentic",
   "planning",
   "multi-agent",
+  "reinforcement learning",
+  "rl",
+  "policy optimization",
+  "policy gradient",
+  "actor-critic",
+  "q-learning",
+  "offline rl",
+  "reward model",
+  "reward shaping",
+  "decision making",
+  "exploration",
+  "credit assignment",
   "evolve",
   "evolution",
   "self-evolving",
@@ -43,7 +55,7 @@ exclude_keywords = [
 ]
 required_keyword_groups = [
   ["agent", "ai agent", "autonomous agent", "agentic", "multi-agent"],
-  ["skill", "skills", "memory", "long-term memory", "episodic memory", "retrieval memory", "tool use", "function calling", "planning", "evolve", "evolution", "self-evolving", "self-improving", "adaptive agent"],
+  ["skill", "skills", "memory", "long-term memory", "episodic memory", "retrieval memory", "tool use", "function calling", "planning", "reinforcement learning", "rl", "policy optimization", "policy gradient", "actor-critic", "q-learning", "offline rl", "reward model", "reward shaping", "decision making", "exploration", "credit assignment", "evolve", "evolution", "self-evolving", "self-improving", "adaptive agent"],
 ]
 
 [[topics]]
