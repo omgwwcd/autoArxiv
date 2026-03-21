@@ -39,7 +39,8 @@ python -m auto_arxiv.main
 筛选顺序目前是：
 
 1. 先找 `Agent / Agent Skill / Agent Memory / Agent Evolve` 强相关论文
-2. 如果当天没有命中，再回退到 `LLM / NLP` 相关论文
+2. 如果当天没有命中，再找 `RL` 相关论文
+3. 如果前两层都没有，再回退到 `LLM / NLP` 相关论文
 
 ## GitHub Secrets
 

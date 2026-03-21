@@ -1,5 +1,5 @@
 [digest]
-project_name = "Auto arXiv Digest - Agent First, NLP Fallback"
+project_name = "Auto arXiv Digest - Agent First, RL Second, NLP Fallback"
 target_day_offset = 1
 max_papers_per_run = 5
 max_candidates = 120
@@ -44,6 +44,35 @@ exclude_keywords = [
 required_keyword_groups = [
   ["agent", "ai agent", "autonomous agent", "agentic", "multi-agent"],
   ["skill", "skills", "memory", "long-term memory", "episodic memory", "retrieval memory", "tool use", "function calling", "planning", "evolve", "evolution", "self-evolving", "self-improving", "adaptive agent"],
+]
+
+[[topics]]
+name = "RL"
+categories = ["cs.LG", "cs.AI"]
+include_keywords = [
+  "reinforcement learning",
+  "rl",
+  "policy optimization",
+  "policy gradient",
+  "actor-critic",
+  "q-learning",
+  "offline rl",
+  "reward model",
+  "reward shaping",
+  "decision making",
+  "exploration",
+  "credit assignment",
+]
+exclude_keywords = [
+  "survey request for papers",
+  "vision-language",
+  "video-language",
+  "image generation",
+  "speech recognition",
+  "text-to-image",
+]
+required_keyword_groups = [
+  ["reinforcement learning", "rl", "policy optimization", "policy gradient", "actor-critic", "q-learning", "offline rl"],
 ]
 
 [[topics]]
