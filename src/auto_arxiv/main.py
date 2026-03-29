@@ -4,6 +4,8 @@ import argparse
 import os
 from datetime import datetime
 
+import requests
+
 from .arxiv import fetch_recent_papers, populate_article_texts
 from .config import load_config
 from .filtering import select_papers
@@ -23,12 +25,15 @@ def main() -> None:
     config = load_config(args.config)
     seen_ids = load_seen_ids(args.seen_store)
     categories = [category for topic in config.topics for category in topic.categories]
-    papers = fetch_recent_papers(
-        categories=categories,
-        max_results=config.digest.max_candidates,
-        timezone_name=config.digest.timezone,
-        target_day_offset=config.digest.target_day_offset,
-    )
+    try:
+        papers = fetch_recent_papers(
+            categories=categories,
+            max_results=config.digest.max_candidates,
+            timezone_name=config.digest.timezone,
+            target_day_offset=config.digest.target_day_offset,
+        )
+    except requests.RequestException:
+        papers = []
     selected = select_papers(config, papers, seen_ids)
     populate_article_texts(selected)
     enrich_papers(config, selected)

@@ -34,6 +34,12 @@ def fetch_recent_papers(
     )
 
     response = _request_with_retries(url, timeout=45)
+    if response.status_code == 429 and max_results > 40:
+        fallback_url = (
+            "https://export.arxiv.org/api/query?"
+            f"search_query={quote_plus(query)}&sortBy=submittedDate&sortOrder=descending&max_results=40"
+        )
+        response = _request_with_retries(fallback_url, timeout=45)
     response.raise_for_status()
 
     local_tz = ZoneInfo(timezone_name)
@@ -73,18 +79,39 @@ def populate_article_texts(papers: list[Paper], max_pages: int = 15, max_chars: 
             paper.article_text = paper.abstract
 
 
-def _request_with_retries(url: str, timeout: int, max_attempts: int = 3) -> requests.Response:
+def _request_with_retries(url: str, timeout: int, max_attempts: int = 5) -> requests.Response:
     last_error: Exception | None = None
+    last_response: requests.Response | None = None
     for attempt in range(max_attempts):
         try:
-            return requests.get(url, timeout=timeout)
+            response = requests.get(
+                url,
+                timeout=timeout,
+                headers={"User-Agent": "autoArxivDigest/1.0 (+https://github.com/shallow777/autoArxiv)"},
+            )
+            if response.status_code == 429:
+                last_response = response
+                if attempt < max_attempts - 1:
+                    retry_after = response.headers.get("Retry-After", "").strip()
+                    sleep_seconds = _compute_retry_sleep_seconds(retry_after, attempt)
+                    time.sleep(sleep_seconds)
+                    continue
+            return response
         except requests.RequestException as exc:
             last_error = exc
             if attempt < max_attempts - 1:
                 time.sleep(2 * (attempt + 1))
+    if last_response is not None:
+        return last_response
     if last_error is not None:
         raise last_error
     raise RuntimeError(f"request failed without an exception: {url}")
+
+
+def _compute_retry_sleep_seconds(retry_after: str, attempt: int) -> int:
+    if retry_after.isdigit():
+        return max(1, int(retry_after))
+    return min(60, 5 * (attempt + 1))
 
 
 def _matches_target_local_date(published_utc: datetime, local_tz: ZoneInfo, target_local_date: date) -> bool:
