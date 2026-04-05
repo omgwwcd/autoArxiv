@@ -10,8 +10,11 @@ def load_seen_ids(path: str | Path) -> set[str]:
     if not store_path.exists():
         return set()
 
-    data = json.loads(store_path.read_text(encoding="utf-8"))
-    return set(data.get("seen_ids", []))
+    try:
+        data = json.loads(store_path.read_text(encoding="utf-8"))
+        return set(data.get("seen_ids", []))
+    except (json.JSONDecodeError, OSError):
+        return set()
 
 
 def save_seen_ids(path: str | Path, seen_ids: set[str]) -> None:
