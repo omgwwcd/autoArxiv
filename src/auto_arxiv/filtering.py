@@ -51,4 +51,8 @@ def _score_topic_match(paper: Paper, topic: TopicRule) -> int:
     if categories.intersection(topic.categories):
         score += 1
 
+    # 至少要有一个关键词命中（标题或摘要）
+    if score == 0:
+        return 0
+
     return score

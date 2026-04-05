@@ -1,6 +1,6 @@
 [digest]
 project_name = "GUI Agent Research Digest"
-target_day_offset = 3
+target_day_offset = 7
 max_papers_per_run = 5
 max_candidates = 80
 language = "zh-CN"
@@ -8,50 +8,66 @@ timezone = "Asia/Shanghai"
 
 [[topics]]
 name = "GUI Agent"
-categories = ["cs.AI", "cs.CL", "cs.LG", "cs.HCI", "cs.SE"]
+categories = ["cs.AI", "cs.CL", "cs.LG", "cs.HCI", "cs.SE", "cs.CV"]
 include_keywords = [
-  # GUI Agent 核心词
+  # GUI Agent / Web Agent / Computer Agent
   "gui agent",
   "web agent",
   "desktop agent",
-  "ui agent",
-  "automation agent",
   "computer agent",
   "app agent",
   "mobile agent",
-  "interface agent",
+  "ui agent",
+  "automation agent",
+  "terminal agent",
+  "digital agent",
   "autonomous gui",
-  "gui understanding",
+  "gui grounding",
   "screen understanding",
-  "gui perception",
-  "visual agent",
-  "multimodal agent",
+  "gui understanding",
+  "interface agent",
+  "widget",
+  "element grounding",
+  # Agent 相关核心词
   "agent",
-  # 操作 & 规划
-  "gui control",
-  "gui manipulation",
-  "click",
-  "element detection",
-  "screen parsing",
+  "agents",
+  "agentic",
+  "multi-agent",
+  # 操作 / 规划
   "task planning",
-  "goal reasoning",
-  "multi-step reasoning",
+  "multi-step",
+  "long-horizon",
   "automation",
-  "workflow automation",
-  "digital assistant",
-  # RL & LLM
-  "reinforcement learning",
-  "rl",
+  "workflow",
+  "grounding",
+  "element detection",
+  "click prediction",
+  # 评测 / Benchmark
+  "benchmark",
+  "evaluation",
+  "environment",
+  "osworld",
+  "AndroidControl",
+  "awwbot",
+  # LLM / VLM / Multimodal
   "large language model",
   "llm",
-  "multimodal llm",
-  "vision language",
+  "multimodal",
+  "vision-language",
   "vlm",
-  "gpt",
+  "gpt-4",
+  "claude",
   "reasoning",
   "chain-of-thought",
   "instruction tuning",
-  "alignment",
+  # RL / 决策
+  "reinforcement learning",
+  "rl",
+  "reward",
+  "offline rl",
+  "imitation learning",
+  "behavior cloning",
+  "decision making",
 ]
 exclude_keywords = [
   "survey request for papers",
