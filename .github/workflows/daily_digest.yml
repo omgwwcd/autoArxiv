@@ -15,6 +15,7 @@ concurrency:
 jobs:
   run-digest:
     runs-on: ubuntu-latest
+    environment: llm
 
     steps:
       - name: Checkout
