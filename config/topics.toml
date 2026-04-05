@@ -1,115 +1,90 @@
 [digest]
-project_name = "Auto arXiv Digest - Agent Memory/RL First, NLP Fallback"
-target_day_offset = 2
+project_name = "GUI Agent Research Digest"
+target_day_offset = 3
 max_papers_per_run = 5
 max_candidates = 80
 language = "zh-CN"
 timezone = "Asia/Shanghai"
 
 [[topics]]
-name = "Agent Skill Memory RL Evolve"
-categories = ["cs.CL", "cs.AI", "cs.LG"]
+name = "GUI Agent"
+categories = ["cs.AI", "cs.CL", "cs.LG", "cs.HCI", "cs.SE"]
 include_keywords = [
+  # GUI Agent 核心
+  "gui agent",
+  "graphical user interface agent",
+  "web agent",
+  "desktop agent",
+  "ui agent",
+  "gui understanding",
+  "gui perception",
+  "screen understanding",
+  "interface agent",
+  "automation agent",
+  "autonomous gui",
+  "gui grounding",
+  "gui element",
+  "widget understanding",
+  "visual gui",
+  "multimodal agent",
   "agent",
-  "ai agent",
-  "autonomous agent",
-  "tool agent",
-  "tool use",
-  "function calling",
-  "skill",
-  "skills",
-  "memory",
-  "long-term memory",
-  "episodic memory",
-  "retrieval memory",
-  "agentic",
-  "planning",
-  "multi-agent",
+  # GUI 交互 & 操作
+  "gui control",
+  "gui manipulation",
+  "click prediction",
+  "element localization",
+  "element detection",
+  "referring expression",
+  "screen parsing",
+  "icon recognition",
+  "text spotting",
+  # GUI 导航 & 规划
+  "task planning",
+  "multi-step reasoning",
+  "hierarchical planning",
+  "goal decomposition",
+  "automation",
+  "workflow automation",
+  "computer task",
+  "digital assistant",
+  "personal agent",
+  # RL 相关
   "reinforcement learning",
   "rl",
   "policy optimization",
-  "policy gradient",
   "actor-critic",
   "q-learning",
   "offline rl",
+  "online rl",
   "reward model",
   "reward shaping",
+  "imitation learning",
+  "behavior cloning",
   "decision making",
-  "exploration",
+  "exploration strategy",
   "credit assignment",
-  "evolve",
-  "evolution",
-  "self-evolving",
-  "self-improving",
-  "adaptive agent",
-  "language agent",
-  "text-based agent",
-]
-exclude_keywords = [
-  "survey request for papers",
-  "vision-language",
-  "video-language",
-  "image generation",
-  "speech recognition",
-  "text-to-image",
-]
-required_keyword_groups = [
-  ["agent", "ai agent", "autonomous agent", "agentic", "multi-agent"],
-]
-
-[[topics]]
-name = "RL"
-categories = ["cs.LG", "cs.AI"]
-include_keywords = [
-  "reinforcement learning",
-  "rl",
-  "policy optimization",
-  "policy gradient",
-  "actor-critic",
-  "q-learning",
-  "offline rl",
-  "reward model",
-  "reward shaping",
-  "decision making",
-  "exploration",
-  "credit assignment",
-]
-exclude_keywords = [
-  "survey request for papers",
-  "vision-language",
-  "video-language",
-  "image generation",
-  "speech recognition",
-  "text-to-image",
-]
-required_keyword_groups = [
-  ["reinforcement learning", "rl", "policy optimization", "policy gradient", "actor-critic", "q-learning", "offline rl"],
-]
-
-[[topics]]
-name = "LLM NLP Fallback"
-categories = ["cs.CL", "cs.AI", "cs.LG"]
-include_keywords = [
+  # LLM 相关
   "large language model",
   "llm",
   "language model",
-  "natural language processing",
-  "nlp",
-  "instruction tuning",
+  "multimodal llm",
+  "vision-language model",
+  "vlm",
+  "gpt",
+  "claude",
   "reasoning",
-  "retrieval-augmented generation",
-  "rag",
+  "chain-of-thought",
+  "instruction tuning",
   "alignment",
-  "text generation",
+  "rag",
 ]
 exclude_keywords = [
   "survey request for papers",
-  "vision-language",
-  "video-language",
-  "image generation",
-  "speech recognition",
-  "text-to-image",
+  "text-to-image generation",
+  "image generation only",
+  "speech synthesis",
+  "pure computer vision without agent",
 ]
 required_keyword_groups = [
-  ["large language model", "llm", "language model", "natural language processing", "nlp"],
+  ["gui agent", "graphical user interface agent", "web agent", "desktop agent", "ui agent", "automation agent", "autonomous gui", "gui understanding", "gui perception"],
 ]
