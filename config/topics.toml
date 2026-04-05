@@ -1,6 +1,6 @@
 [digest]
 project_name = "Auto arXiv Digest - Agent Memory/RL First, NLP Fallback"
-target_day_offset = 1
+target_day_offset = 2
 max_papers_per_run = 5
 max_candidates = 80
 language = "zh-CN"

@@ -82,12 +82,15 @@ def populate_article_texts(papers: list[Paper], max_pages: int = 15, max_chars: 
 def _request_with_retries(url: str, timeout: int, max_attempts: int = 5) -> requests.Response:
     last_error: Exception | None = None
     last_response: requests.Response | None = None
+    sess = requests.Session()
+    sess.trust_env = True  # 从环境变量读取代理（http_proxy/https_proxy）
     for attempt in range(max_attempts):
         try:
-            response = requests.get(
+            response = sess.get(
                 url,
                 timeout=timeout,
                 headers={"User-Agent": "autoArxivDigest/1.0 (+https://github.com/shallow777/autoArxiv)"},
+                allow_redirects=True,
             )
             if response.status_code == 429:
                 last_response = response

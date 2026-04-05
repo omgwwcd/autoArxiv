@@ -1,12 +1,24 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import time
+from typing import Optional
 
 import requests
 
 from .models import AppConfig, Paper
+
+# 强制添加 handler 确保日志输出
+logger = logging.getLogger("llm")
+logger.setLevel(logging.INFO)
+_ch = logging.StreamHandler()
+_ch.setLevel(logging.INFO)
+_ch.setFormatter(logging.Formatter("[LLM] %(asctime)s %(message)s", datefmt="%H:%M:%S"))
+logger.addHandler(_ch)
+# 避免重复
+logger.handlers = [_ch]
 
 QUALITY_THRESHOLD = 90
 MAX_REWRITE_ROUNDS = 5
@@ -18,7 +30,11 @@ def enrich_papers(config: AppConfig, papers: list[Paper]) -> None:
     deepseek_model = os.getenv("DEEPSEEK_MODEL", "").strip() or "deepseek-chat"
     deepseek_base_url = os.getenv("DEEPSEEK_BASE_URL", "").rstrip("/") or "https://api.deepseek.com"
 
-    for paper in papers:
+    logger.info(f"enrich_papers called with {len(papers)} papers")
+    logger.info(f"Provider: {provider}, Model: {deepseek_model}, BaseURL: {deepseek_base_url}")
+
+    for i, paper in enumerate(papers):
+        logger.info(f"=== Processing paper {i+1}/{len(papers)}: {paper.title[:50]} ===")
         if provider == "deepseek" and deepseek_key:
             try:
                 paper.digest, paper.digest_quality_score = _summarize_with_deepseek(
@@ -28,7 +44,9 @@ def enrich_papers(config: AppConfig, papers: list[Paper]) -> None:
                     model=deepseek_model,
                     base_url=deepseek_base_url,
                 )
-            except Exception:
+                logger.info(f"Final digest score: {paper.digest_quality_score}")
+            except Exception as e:
+                logger.error(f"LLM summarization failed: {e}")
                 paper.digest = _fallback_digest(paper)
                 paper.digest_quality_score = 0
         else:
@@ -46,28 +64,41 @@ def _summarize_with_deepseek(
     model: str,
     base_url: str,
 ) -> tuple[dict, int]:
+    logger.info("=== Starting LLM summarization ===")
+    logger.info(f"Paper: {paper.title[:60]}")
+    logger.info(f"Model: {model} @ {base_url}")
     previous_digest: dict | None = None
     review_feedback = ""
     best_digest: dict | None = None
     best_score = -1
 
-    for _ in range(MAX_REWRITE_ROUNDS):
+    for round_i in range(MAX_REWRITE_ROUNDS):
+        logger.info(f"--- Round {round_i + 1}/{MAX_REWRITE_ROUNDS} ---")
         prompt = _build_prompt(config, paper, previous_digest, review_feedback)
+        logger.info(f"Prompt length: {len(prompt)} chars")
+
         digest = _generate_digest(prompt, api_key, model, base_url)
+        logger.info(f"Generate returned keys: {list(digest.keys())}")
+
         score, feedback = _review_digest(config, paper, digest, api_key, model, base_url)
+        logger.info(f"Review score: {score}/100 | feedback: {feedback[:80] if feedback else '(none)'}...")
 
         if score > best_score:
             best_digest = digest
             best_score = score
+            logger.info(f"New best score: {score}")
 
         if score >= QUALITY_THRESHOLD:
+            logger.info(f"=== SUCCESS: score {score} >= {QUALITY_THRESHOLD}, returning ===")
             return digest, score
 
         previous_digest = digest
         review_feedback = feedback
 
-    if best_digest is None:
+    if best_digest is None or not best_digest:
+        logger.error("=== FAILED: all rounds returned empty digest ===")
         raise RuntimeError("failed to produce a digest")
+    logger.warning(f"=== TIMEOUT: best score {best_score} < {QUALITY_THRESHOLD}, returning best ===")
     return best_digest, best_score
 
 
@@ -144,6 +175,7 @@ def _build_prompt(
 
 
 def _generate_digest(prompt: str, api_key: str, model: str, base_url: str) -> dict:
+    logger.info(f"POST {base_url}/chat/completions")
     response = _post_with_retries(
         f"{base_url}/chat/completions",
         headers={
@@ -163,14 +195,18 @@ def _generate_digest(prompt: str, api_key: str, model: str, base_url: str) -> di
                 },
             ],
             "temperature": 0.2,
-            "response_format": {"type": "json_object"},
         },
-        timeout=120,
+        timeout=300,
     )
+    logger.info(f"Response status: {response.status_code}")
     response.raise_for_status()
     data = response.json()
     output_text = _extract_deepseek_text(data)
-    return _parse_summary_payload(output_text)
+    logger.info(f"Extracted text length: {len(output_text)} chars")
+    logger.info(f"Text preview: {output_text[:200]!r}")
+    parsed = _parse_summary_payload(output_text)
+    logger.info(f"Parsed keys: {list(parsed.keys())}")
+    return parsed
 
 
 def _review_digest(
@@ -213,17 +249,19 @@ def _review_digest(
                 },
             ],
             "temperature": 0.1,
-            "response_format": {"type": "json_object"},
         },
-        timeout=120,
+        timeout=300,
     )
+    logger.info(f"Review response status: {response.status_code}")
     response.raise_for_status()
     data = response.json()
     output_text = _extract_deepseek_text(data)
+    logger.info(f"Review text: {output_text[:200]!r}")
     parsed = json.loads(output_text)
     score = int(parsed.get("score", 0))
     feedback = str(parsed.get("feedback", "")).strip()
     score = max(0, min(100, score))
+    logger.info(f"Review parsed: score={score}, feedback_len={len(feedback)}")
     return score, feedback
 
 
@@ -234,7 +272,15 @@ def _extract_deepseek_text(payload: dict) -> str:
     message = choices[0].get("message", {})
     content = message.get("content", "")
     if isinstance(content, str):
-        return content.strip()
+        text = content.strip()
+        # Strip markdown code fences if present
+        if text.startswith("```"):
+            lines = text.split("\n")
+            if len(lines) >= 2:
+                text = "\n".join(lines[1:-1])  # Remove first (```lang) and last (```) lines
+            else:
+                text = ""
+        return text.strip()
     if isinstance(content, list):
         chunks: list[str] = []
         for item in content:
@@ -246,7 +292,29 @@ def _extract_deepseek_text(payload: dict) -> str:
 
 
 def _parse_summary_payload(output_text: str) -> dict:
-    return json.loads(output_text)
+    text = output_text.strip()
+    if text.startswith("```"):
+        lines = text.split("\n")
+        if len(lines) >= 2:
+            text = "\n".join(lines[1:-1])
+        text = text.strip()
+    try:
+        result = json.loads(text)
+        logger.info(f"JSON parse OK, {len(result)} keys")
+        return result
+    except json.JSONDecodeError as e:
+        logger.warning(f"JSON parse failed: {e}")
+        start = text.find("{")
+        end = text.rfind("}") + 1
+        if start >= 0 and end > start:
+            try:
+                result = json.loads(text[start:end])
+                logger.info(f"JSON extraction OK, {len(result)} keys")
+                return result
+            except json.JSONDecodeError as e2:
+                logger.warning(f"JSON extraction also failed: {e2}")
+        logger.error("All JSON parsing attempts failed, returning empty dict")
+        return {}
 
 
 def _post_with_retries(
@@ -257,9 +325,11 @@ def _post_with_retries(
     max_attempts: int = 3,
 ) -> requests.Response:
     last_error: Exception | None = None
+    session = requests.Session()
+    session.trust_env = False
     for attempt in range(max_attempts):
         try:
-            return requests.post(
+            return session.post(
                 url,
                 headers=headers,
                 json=payload,
