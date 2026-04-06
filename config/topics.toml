@@ -2,15 +2,16 @@
 project_name = "GUI Agent Research Digest"
 target_day_offset = 7
 max_papers_per_run = 5
-max_candidates = 80
+max_candidates = 120
 language = "zh-CN"
 timezone = "Asia/Shanghai"
+
+# 优先级从高到低：系统按顺序匹配，第一个有命中的 topic 生效
 
 [[topics]]
 name = "GUI Agent"
 categories = ["cs.AI", "cs.CL", "cs.LG", "cs.HCI", "cs.SE", "cs.CV"]
 include_keywords = [
-  # GUI Agent / Web Agent / Computer Agent
   "gui agent",
   "web agent",
   "desktop agent",
@@ -20,54 +21,141 @@ include_keywords = [
   "ui agent",
   "automation agent",
   "terminal agent",
-  "digital agent",
+  "agentic",
+  "multi-agent",
   "autonomous gui",
   "gui grounding",
   "screen understanding",
   "gui understanding",
   "interface agent",
-  "widget",
   "element grounding",
-  # Agent 相关核心词
-  "agent",
-  "agents",
-  "agentic",
-  "multi-agent",
-  # 操作 / 规划
   "task planning",
   "multi-step",
   "long-horizon",
-  "automation",
-  "workflow",
   "grounding",
-  "element detection",
-  "click prediction",
-  # 评测 / Benchmark
   "benchmark",
   "evaluation",
-  "environment",
   "osworld",
-  "AndroidControl",
-  "awwbot",
-  # LLM / VLM / Multimodal
-  "large language model",
+  "agent",
+  "automation",
+  "workflow",
   "llm",
+  "large language model",
   "multimodal",
-  "vision-language",
   "vlm",
-  "gpt-4",
-  "claude",
-  "reasoning",
-  "chain-of-thought",
-  "instruction tuning",
-  # RL / 决策
+  "vision-language",
   "reinforcement learning",
-  "rl",
-  "reward",
-  "offline rl",
-  "imitation learning",
-  "behavior cloning",
-  "decision making",
+]
+exclude_keywords = [
+  "survey request for papers",
+]
+required_keyword_groups = []
+
+[[topics]]
+name = "Action Recognition"
+categories = ["cs.CV", "cs.AI"]
+include_keywords = [
+  "action recognition",
+  "activity recognition",
+  "gesture recognition",
+  "pose estimation",
+  "skeleton",
+  "video understanding",
+  "temporal modeling",
+  "video classification",
+  "action detection",
+  "behavior recognition",
+  "motion recognition",
+  "human activity",
+  "spatial-temporal",
+  "graph convolution",
+  "transformer",
+  "attention",
+]
+exclude_keywords = [
+  "survey request for papers",
+]
+required_keyword_groups = []
+
+[[topics]]
+name = "Diffusion Model"
+categories = ["cs.LG", "cs.CV", "cs.AI", "cs.CL"]
+include_keywords = [
+  "diffusion model",
+  "score-based model",
+  "latent diffusion",
+  "stable diffusion",
+  "ddpm",
+  "ddim",
+  "score matching",
+  "generative model",
+  "text-to-image",
+  "text-to-video",
+  "image generation",
+  "video generation",
+  "conditional diffusion",
+  "guidance",
+  "consistency model",
+  "flow matching",
+  "rectified flow",
+  "manufacturing diffusion",
+  "physical diffusion",
+  "scientific diffusion",
+]
+exclude_keywords = [
+  "survey request for papers",
+]
+required_keyword_groups = []
+
+[[topics]]
+name = "Data-Centric"
+categories = ["cs.LG", "cs.AI", "cs.CL"]
+include_keywords = [
+  "data-centric",
+  "data efficiency",
+  "sample efficiency",
+  "curriculum learning",
+  "continual learning",
+  "lifelong learning",
+  "domain adaptation",
+  "transfer learning",
+  "data augmentation",
+  "synthetic data",
+  "data generation",
+  "imbalanced data",
+  "noise robustness",
+  "label efficiency",
+  "self-supervised",
+  "contrastive learning",
+  "pre-training",
+  "data selection",
+  "data filtering",
+]
+exclude_keywords = [
+  "survey request for papers",
+]
+required_keyword_groups = []
+
+[[topics]]
+name = "Anomaly Detection"
+categories = ["cs.LG", "cs.AI", "cs.CV"]
+include_keywords = [
+  "anomaly detection",
+  "outlier detection",
+  "novelty detection",
+  "one-class",
+  "out-of-distribution",
+  "ood",
+  "near-distribution",
+  "long-tail",
+  "open-set recognition",
+  "novelty discovery",
+  "anomaly segmentation",
+  "defect detection",
+  "fault detection",
+  "intrusion detection",
+  "change detection",
+  "rare event",
 ]
 exclude_keywords = [
   "survey request for papers",
