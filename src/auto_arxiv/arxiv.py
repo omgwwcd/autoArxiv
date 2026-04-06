@@ -49,7 +49,8 @@ def fetch_recent_papers(
 
     for entry in root.findall("atom:entry", ATOM_NS):
         paper = _parse_entry(entry)
-        if _matches_target_local_date(paper.published, local_tz, target_local_date):
+        published_local_date = paper.published.astimezone(local_tz).date()
+        if published_local_date >= target_local_date:
             papers.append(paper)
 
     return papers
